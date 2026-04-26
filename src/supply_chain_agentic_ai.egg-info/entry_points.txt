@@ -1,0 +1,2 @@
+[console_scripts]
+supply-chain-ai = supply_chain_ai.main:app

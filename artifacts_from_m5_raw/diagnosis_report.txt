@@ -1,0 +1,13 @@
+Anomaly ID: 6ed306fc43debfdde5769e5660e04febfc9bf0f4a5131e8a79420c24423ea2fe
+Rule: demand_spike
+Date: 2016-02-07
+Store: CA_1
+Item: FOODS_1_001
+Severity: high
+Details: Demand significantly above rolling baseline.
+
+Root Cause Analysis:
+Observed demand significantly exceeds historical baseline, likely due to promotion/event-driven uplift. Current closing stock: 162, latest forecast: 36.14.
+
+Recommendations:
+- Activate demand surge plan for FOODS_1_001 in CA_1 (temporary safety stock and expedited reorder).

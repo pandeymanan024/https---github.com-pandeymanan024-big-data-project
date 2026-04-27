@@ -4,6 +4,7 @@ from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from supply_chain_ai.agent.prompt_evolution import evolve_prompt_for_diagnosis
 from supply_chain_ai.agent.tools import AgentDataTools
 
 
@@ -13,6 +14,7 @@ class AgentState(TypedDict, total=False):
     context: dict
     root_cause: str
     recommendations: list[str]
+    prompt_evolution: dict
     explanation: str
 
 
@@ -27,13 +29,15 @@ class SupplyChainDiagnosisAgent:
         graph.add_node("trace_context", self._trace_context)
         graph.add_node("infer_root_cause", self._infer_root_cause)
         graph.add_node("fetch_recommendations", self._fetch_recommendations)
+        graph.add_node("evolve_prompt", self._evolve_prompt)
         graph.add_node("compose_explanation", self._compose_explanation)
 
         graph.add_edge(START, "fetch_anomaly")
         graph.add_edge("fetch_anomaly", "trace_context")
         graph.add_edge("trace_context", "infer_root_cause")
         graph.add_edge("infer_root_cause", "fetch_recommendations")
-        graph.add_edge("fetch_recommendations", "compose_explanation")
+        graph.add_edge("fetch_recommendations", "evolve_prompt")
+        graph.add_edge("evolve_prompt", "compose_explanation")
         graph.add_edge("compose_explanation", END)
 
         return graph.compile()
@@ -77,21 +81,35 @@ class SupplyChainDiagnosisAgent:
         anomaly_id = state["anomaly_id"]
         return {"recommendations": self.tools.get_recommendations_for_anomaly(anomaly_id)}
 
+    def _evolve_prompt(self, state: AgentState) -> AgentState:
+        evolution = evolve_prompt_for_diagnosis(
+            anomaly_id=state["anomaly_id"],
+            anomaly=state["anomaly"],
+            root_cause=state.get("root_cause", "N/A"),
+            recommendations=state.get("recommendations", []),
+            context=state.get("context", {}),
+        )
+        return {"prompt_evolution": evolution}
+
     def _compose_explanation(self, state: AgentState) -> AgentState:
-        anomaly = state["anomaly"]
-        recommendations = state.get("recommendations", [])
-        recommendation_text = "\n".join([f"- {r}" for r in recommendations]) if recommendations else "- No recommendation generated"
+        evolution = state.get("prompt_evolution", {})
+        best_response = evolution.get("best_response", "No diagnosis produced.")
+        best_candidate = evolution.get("best_candidate", "N/A")
+        best_score = evolution.get("best_score", "N/A")
+        rounds = evolution.get("rounds", [])
+        rounds_text = "\n".join(
+            [
+                f"- Round {r.get('round')}: {r.get('candidate_name')} | score={r.get('score')}"
+                for r in rounds
+            ]
+        )
 
         explanation = (
-            f"Anomaly ID: {state['anomaly_id']}\n"
-            f"Rule: {anomaly.get('rule_name')}\n"
-            f"Date: {anomaly.get('date')}\n"
-            f"Store: {anomaly.get('store_id')}\n"
-            f"Item: {anomaly.get('item_id')}\n"
-            f"Severity: {anomaly.get('severity')}\n"
-            f"Details: {anomaly.get('details')}\n\n"
-            f"Root Cause Analysis:\n{state.get('root_cause', 'N/A')}\n\n"
-            f"Recommendations:\n{recommendation_text}\n"
+            f"{best_response}\n"
+            f"\nPrompt Evolution:\n"
+            f"Selected candidate: {best_candidate}\n"
+            f"Best score: {best_score}\n"
+            f"Rounds:\n{rounds_text}\n"
         )
         return {"explanation": explanation}
 

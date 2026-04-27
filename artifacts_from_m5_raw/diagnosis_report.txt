@@ -4,10 +4,21 @@ Date: 2016-02-07
 Store: CA_1
 Item: FOODS_1_001
 Severity: high
+Observed vs expected: 76.0 vs 34.92857142857143
 Details: Demand significantly above rolling baseline.
+Context: Closing stock=162, forecast=36.14
 
 Root Cause Analysis:
 Observed demand significantly exceeds historical baseline, likely due to promotion/event-driven uplift. Current closing stock: 162, latest forecast: 36.14.
 
 Recommendations:
 - Activate demand surge plan for FOODS_1_001 in CA_1 (temporary safety stock and expedited reorder).
+
+
+Prompt Evolution:
+Selected candidate: baseline_analyst
+Best score: 13
+Rounds:
+- Round 1: baseline_analyst | score=13
+- Round 2: structured_rca | score=13
+- Round 3: decision_brief | score=11

@@ -29,7 +29,10 @@ This project implements an end-to-end supply-chain intelligence platform that:
 5. **Agentic AI Layer (LangGraph)**  
    Traces anomaly context and returns explainable root-cause summaries.
 
-6. **Recommendation Layer**  
+6. **Prompt Evolution Layer**  
+   Runs multiple diagnosis prompt strategies, scores them, and selects the highest-quality response.
+
+7. **Recommendation Layer**  
    Produces restocking, allocation, and substitution actions.
 
 ---
